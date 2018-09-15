@@ -13,7 +13,17 @@ const pusher = new Pusher({
   secret: process.env.PUSHER_APP_SECRET,
   cluster: 'ap1',
   encrypted: true,
-})
+});
+
+const notify = (item) => {
+  return new Promise((resolve, reject) => {
+    return pusher.trigger('monitor', item.type, item, null, (err) => {
+      if (err) return reject(err);
+
+      return resolve(true);
+    });
+  });
+};
 
 module.exports.hello = async (event, context) => {
   return {
@@ -39,7 +49,7 @@ module.exports.pushDeviceData = async (event, context) => {
   }).promise();
 
   console.log('Pushing');
-  await pusher.trigger('monitor', item.type, item);
+  await notify(item);
   console.log('pushed to monitor', item.type, item);
 
   return {
