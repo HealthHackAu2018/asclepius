@@ -37,7 +37,10 @@ provider:
 
   environment:
     DEVICE_DATA_TABLE: ${self:service}-${self:provider.stage}-device-data
-    JWT_SECRET: ${env:JWT_SECRET}
+    PUSHER_APP_ID: ${env:ASCLEPIUS_PUSHER_APP_ID}
+    PUSHER_APP_KEY: ${env:ASCLEPIUS_PUSHER_APP_KEY}
+    PUSHER_APP_SECRET: ${env:ASCLEPIUS_PUSHER_APP_SECRET}
+
 
 functions:
   pushDeviceData:
@@ -46,6 +49,17 @@ functions:
       - http:
           path: device_data
           method: post
+          cors:
+            <<: *CORS
+      - schedule:
+          <<: *KEEP_WARM
+
+  getHeartRate:
+    handler: handler.getHeartRate
+    events:
+      - http:
+          path: heartrate
+          method: get
           cors:
             <<: *CORS
       - schedule:
