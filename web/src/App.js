@@ -12,7 +12,7 @@ class App extends Component {
   state = { heartRate: 'unknown' };
 
   async componentDidMount() {
-    const { data } = await axios.get('https://l2qay1y8v5.execute-api.us-east-1.amazonaws.com/dev/heartrate');
+    const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/heartrate`);
     this.setState({ heartRate: data.heartRate });
     this.channel = pusher.subscribe('monitor');
     this.channel.bind('heartrate', (evt) => {
