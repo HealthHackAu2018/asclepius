@@ -14,8 +14,7 @@ export default class App extends React.Component {
       found: false,
       connected: false,
       deviceId: undefined,
-      services: [],
-      values: [],
+      heartrate: 'unknown',
     };
   }
 
@@ -75,10 +74,25 @@ export default class App extends React.Component {
   }
 
   monitorCharacteristic = (error, characteristic) => {
-    this.setState(state => ({
-      error,
-      values: state.values.concat(characteristic.value),
-    }));
+    if (!error) {
+      const heartrate = Buffer(characteristic.value, 'base64').toString();
+
+      if (heartrate !== this.state.heartrate) {
+        this.setState(state => ({ heartrate }));
+
+        fetch('https://l2qay1y8v5.execute-api.us-east-1.amazonaws.com/dev/device_data', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'heartrate',
+            data: heartrate,
+          }),
+        });
+      }
+    }
   }
 
   render() {
@@ -98,8 +112,7 @@ export default class App extends React.Component {
         <Content>
           <Text>Device found: {this.state.found ? 'yes' : 'no'}</Text>
           <Text>Device status: {this.state.connected ? 'connected' : 'disconnected'}</Text>
-          <Text>Services: {this.state.services.join(', ')}</Text>
-          <Text>Values: {JSON.stringify(this.state.values.map(v => Buffer(v, 'base64').toString()))}</Text>
+          <Text>BPM: {this.state.heartrate}</Text>
         </Content>
         <Footer>
           <FooterTab>

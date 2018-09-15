@@ -33,51 +33,36 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource:
-        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DEVICE_DATA_TABLE}"
-    - Effect: "Allow"
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}/index/*"
 
   environment:
-    USERS_TABLE: ${self:service}-${self:provider.stage}-users
     DEVICE_DATA_TABLE: ${self:service}-${self:provider.stage}-device-data
     JWT_SECRET: ${env:JWT_SECRET}
 
 functions:
-  hello:
-    handler: handler.hello
+  pushDeviceData:
+    handler: handler.pushDeviceData
+    events:
+      - http:
+          path: device_data
+          method: post
+          cors:
+            <<: *CORS
+      - schedule:
+          <<: *KEEP_WARM
 
 resources:
   Resources:
-    UsersTable:
-      Type: 'AWS::DynamoDB::Table'
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: email
-            AttributeType: S
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: email
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:provider.environment.USERS_TABLE}
-
     DeviceDataTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
         AttributeDefinitions:
-          - AttributeName: userEmail
+          - AttributeName: type
             AttributeType: S
           - AttributeName: timestamp
             AttributeType: N
         KeySchema:
-          - AttributeName: userEmail
+          - AttributeName: type
             KeyType: HASH
           - AttributeName: timestamp
             KeyType: RANGE
